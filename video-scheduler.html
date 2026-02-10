@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            padding: 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .current-time {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            min-height: 600px;
+        }
+
+        .left-section {
+            padding: 30px;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .right-section {
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .now-playing {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .now-playing-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .now-playing-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .playlist-info {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .playlist-count {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .playlist-status {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .controls button,
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976D2;
+        }
+
+        .btn-secondary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #388E3C;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #f57c00;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .file-item {
+            background: #f8f8f8;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item-name {
+            color: #333;
+            font-size: 14px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+
+        .file-item-delete {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            background: #f44336;
+            color: white;
+            transition: background 0.3s;
+        }
+
+        .file-item-delete:hover {
+            background: #d32f2f;
+        }
+
+        .schedule-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .schedule-item {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border-left: 3px solid #2196F3;
+        }
+
+        .schedule-item.active {
+            background: #ffebee;
+            border-left-color: #f44336;
+            animation: highlight 0.5s;
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .schedule-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .schedule-time {
+            font-weight: 600;
+            color: #2196F3;
+            font-size: 16px;
+        }
+
+        .schedule-item.active .schedule-time {
+            color: #f44336;
+        }
+
+        .schedule-video {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .schedule-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            background: #f44336;
+            color: white;
+            transition: background 0.3s;
+        }
+
+        .schedule-actions button:hover {
+            background: #d32f2f;
+        }
+
+        .status-indicator {
+            color: #f44336;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .popup-content {
+            position: relative;
+            width: 90%;
+            max-width: 1000px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: scale(0.8) translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .popup-video {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .popup-header {
+            background: #f44336;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .popup-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .popup-close:hover {
+            background: #d32f2f;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .files-section {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .files-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .left-section {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Video Scheduler</h1>
+            <div class="current-time" id="currentTime">Loading...</div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-section">
+                <h2 class="section-title">Playlist Player</h2>
+                
+                <div class="video-container">
+                    <video id="mainVideo" controls>
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+
+                <div class="now-playing" id="nowPlayingContainer" style="display: none;">
+                    <div class="now-playing-label">Now Playing</div>
+                    <div class="now-playing-title" id="nowPlayingTitle">No video</div>
+                </div>
+
+                <div class="playlist-info" id="playlistInfo" style="display: none;">
+                    <div class="playlist-count" id="playlistCount">0 files loaded</div>
+                    <div class="playlist-status" id="playlistStatus">Stopped</div>
+                </div>
+
+                <div class="controls">
+                    <input type="file" id="playlistUpload" accept="video/*,audio/*" multiple>
+                    <button class="btn-primary" onclick="document.getElementById('playlistUpload').click()">
+                        Upload Playlist
+                    </button>
+                    <button class="btn-secondary" onclick="startPlaylist()">Start Playlist</button>
+                    <button class="btn-danger" onclick="pauseVideo()">Pause</button>
+                </div>
+
+                <div class="files-section" id="playlistFilesSection" style="display: none;">
+                    <div class="files-section-title">Playlist Files</div>
+                    <div class="file-list" id="playlistFilesList"></div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <h2 class="section-title">Schedule</h2>
+                
+                <div class="controls" style="margin-bottom: 20px;">
+                    <input type="file" id="scheduleFileUpload" accept="video/*,audio/*" multiple>
+                    <button class="btn-warning" onclick="document.getElementById('scheduleFileUpload').click()">
+                        Upload Schedule Files
+                    </button>
+                </div>
+
+                <div class="files-section" id="scheduleFilesSection" style="display: none;">
+                    <div class="files-section-title">Available Schedule Files</div>
+                    <div class="file-list" id="scheduleFilesList"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleTime">Time</label>
+                    <input type="time" id="scheduleTime" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="scheduleVideoSelect">Select File</label>
+                    <select id="scheduleVideoSelect" disabled>
+                        <option value="">Upload schedule files first</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 30px;" onclick="addSchedule()">
+                    Add Schedule
+                </button>
+
+                <h3 class="section-title" style="font-size: 16px;">Scheduled Items</h3>
+                <div class="schedule-list" id="scheduleList">
+                    <div class="empty-state">No schedules yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closeScheduledVideo()">Close</button>
+            <div class="popup-header">SCHEDULED VIDEO PLAYING</div>
+            <video id="popupVideo" class="popup-video" autoplay>
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let playlistFiles = [];
+        let scheduleFiles = [];
+        let schedules = [];
+        let currentPlaylistIndex = 0;
+        let isPlaylistRunning = false;
+        let pausedState = {
+            wasPaused: false,
+            currentTime: 0,
+            playlistIndex: 0
+        };
+
+        const mainVideo = document.getElementById('mainVideo');
+        const popupVideo = document.getElementById('popupVideo');
+        const popupOverlay = document.getElementById('popupOverlay');
+        const scheduleList = document.getElementById('scheduleList');
+        const scheduleVideoSelect = document.getElementById('scheduleVideoSelect');
+
+        // Update current time display
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Handle playlist file upload
+        document.getElementById('playlistUpload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const validFiles = files.filter(file => 
+                file.type.startsWith('video/') || file.type.startsWith('audio/')
+            );
+            
+            if (validFiles.length === 0) {
+                alert('No valid video or audio files found!');
+                return;
+            }
+
+            // Add to playlist files
+            validFiles.forEach(file => {
+                playlistFiles.push({
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    url: URL.createObjectURL(file),
+                    type: file.type,
+                    file: file
+                });
+            });
+
+            renderPlaylistFiles();
+            updatePlaylistInfo();
+            
+            // Reset file input
+            this.value = '';
+        });
+
+        // Handle schedule file upload
+        document.getElementById('scheduleFileUpload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const validFiles = files.filter(file => 
+                file.type.startsWith('video/') || file.type.startsWith('audio/')
+            );
+            
+            if (validFiles.length === 0) {
+                alert('No valid video or audio files found!');
+                return;
+            }
+
+            // Add to schedule files
+            validFiles.forEach(file => {
+                scheduleFiles.push({
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    url: URL.createObjectURL(file),
+                    type: file.type,
+                    file: file
+                });
+            });
+
+            renderScheduleFiles();
+            updateScheduleSelect();
+            
+            // Reset file input
+            this.value = '';
+        });
+
+        // Render playlist files
+        function renderPlaylistFiles() {
+            const section = document.getElementById('playlistFilesSection');
+            const list = document.getElementById('playlistFilesList');
+            
+            if (playlistFiles.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            list.innerHTML = playlistFiles.map(file => `
+                <div class="file-item">
+                    <div class="file-item-name" title="${file.name}">${file.name}</div>
+                    <button class="file-item-delete" onclick="deletePlaylistFile(${file.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Render schedule files
+        function renderScheduleFiles() {
+            const section = document.getElementById('scheduleFilesSection');
+            const list = document.getElementById('scheduleFilesList');
+            
+            if (scheduleFiles.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            list.innerHTML = scheduleFiles.map(file => `
+                <div class="file-item">
+                    <div class="file-item-name" title="${file.name}">${file.name}</div>
+                    <button class="file-item-delete" onclick="deleteScheduleFile(${file.id})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Delete playlist file
+        function deletePlaylistFile(id) {
+            playlistFiles = playlistFiles.filter(f => f.id !== id);
+            renderPlaylistFiles();
+            updatePlaylistInfo();
+            
+            // Stop playlist if no files left
+            if (playlistFiles.length === 0) {
+                isPlaylistRunning = false;
+                mainVideo.pause();
+                mainVideo.src = '';
+                document.getElementById('nowPlayingContainer').style.display = 'none';
+            }
+        }
+
+        // Delete schedule file
+        function deleteScheduleFile(id) {
+            const file = scheduleFiles.find(f => f.id === id);
+            
+            // Remove any schedules using this file
+            schedules = schedules.filter(s => s.fileId !== id);
+            renderSchedules();
+            
+            // Remove the file
+            scheduleFiles = scheduleFiles.filter(f => f.id !== id);
+            renderScheduleFiles();
+            updateScheduleSelect();
+        }
+
+        // Update playlist info
+        function updatePlaylistInfo() {
+            if (playlistFiles.length > 0) {
+                document.getElementById('playlistInfo').style.display = 'block';
+                document.getElementById('playlistCount').textContent = `${playlistFiles.length} files loaded`;
+            } else {
+                document.getElementById('playlistInfo').style.display = 'none';
+            }
+        }
+
+        // Update schedule select dropdown
+        function updateScheduleSelect() {
+            scheduleVideoSelect.disabled = scheduleFiles.length === 0;
+            
+            if (scheduleFiles.length === 0) {
+                scheduleVideoSelect.innerHTML = '<option value="">Upload schedule files first</option>';
+            } else {
+                scheduleVideoSelect.innerHTML = '<option value="">Select a file</option>' +
+                    scheduleFiles.map((file, i) => `<option value="${i}">${file.name}</option>`).join('');
+            }
+        }
+
+        // Start playlist
+        function startPlaylist() {
+            if (playlistFiles.length === 0) {
+                alert('Please upload playlist files first!');
+                return;
+            }
+
+            isPlaylistRunning = true;
+            currentPlaylistIndex = 0;
+            playMediaFromPlaylist(0);
+            document.getElementById('playlistStatus').textContent = 'Playing';
+        }
+
+        // Play specific media from playlist
+        function playMediaFromPlaylist(index) {
+            if (index >= playlistFiles.length) {
+                index = 0;
+            }
+
+            currentPlaylistIndex = index;
+            const media = playlistFiles[index];
+            
+            mainVideo.src = media.url;
+            mainVideo.play();
+            
+            // Update now playing
+            document.getElementById('nowPlayingContainer').style.display = 'block';
+            document.getElementById('nowPlayingTitle').textContent = media.name;
+
+            // When media ends, play next one
+            mainVideo.onended = function() {
+                if (isPlaylistRunning) {
+                    playMediaFromPlaylist(currentPlaylistIndex + 1);
+                }
+            };
+        }
+
+        // Pause video
+        function pauseVideo() {
+            mainVideo.pause();
+            document.getElementById('playlistStatus').textContent = 'Paused';
+        }
+
+        // Add schedule
+        function addSchedule() {
+            const timeInput = document.getElementById('scheduleTime').value;
+            const fileIndex = scheduleVideoSelect.value;
+            
+            if (!timeInput) {
+                alert('Please set a time!');
+                return;
+            }
+
+            if (fileIndex === '') {
+                alert('Please select a file!');
+                return;
+            }
+
+            const selectedFile = scheduleFiles[parseInt(fileIndex)];
+            
+            const schedule = {
+                id: Date.now(),
+                time: timeInput,
+                fileId: selectedFile.id,
+                fileUrl: selectedFile.url,
+                fileName: selectedFile.name,
+                active: false
+            };
+
+            schedules.push(schedule);
+            schedules.sort((a, b) => a.time.localeCompare(b.time));
+            
+            renderSchedules();
+            
+            // Reset form
+            document.getElementById('scheduleTime').value = '';
+            scheduleVideoSelect.value = '';
+        }
+
+        // Remove schedule
+        function removeSchedule(id) {
+            schedules = schedules.filter(s => s.id !== id);
+            renderSchedules();
+        }
+
+        // Render schedule list
+        function renderSchedules() {
+            if (schedules.length === 0) {
+                scheduleList.innerHTML = '<div class="empty-state">No schedules yet</div>';
+                return;
+            }
+
+            scheduleList.innerHTML = schedules.map(schedule => `
+                <div class="schedule-item ${schedule.active ? 'active' : ''}" id="schedule-${schedule.id}">
+                    <div class="schedule-item-header">
+                        <span class="schedule-time">${schedule.time}</span>
+                        <div class="schedule-actions">
+                            <button onclick="removeSchedule(${schedule.id})">Delete</button>
+                        </div>
+                    </div>
+                    <div class="schedule-video">${schedule.fileName}</div>
+                    ${schedule.active ? '<div class="status-indicator">Playing Now</div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // Check schedules every second
+        function checkSchedules() {
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                              now.getMinutes().toString().padStart(2, '0');
+
+            schedules.forEach(schedule => {
+                if (schedule.time === currentTime && !schedule.active) {
+                    triggerScheduledVideo(schedule);
+                }
+            });
+        }
+
+        // Trigger scheduled video
+        function triggerScheduledVideo(schedule) {
+            schedule.active = true;
+            renderSchedules();
+
+            // Save current state
+            pausedState = {
+                wasPaused: mainVideo.paused,
+                currentTime: mainVideo.currentTime,
+                playlistIndex: currentPlaylistIndex
+            };
+
+            // Pause playlist
+            mainVideo.pause();
+
+            // Show popup
+            popupVideo.src = schedule.fileUrl;
+            popupOverlay.classList.add('active');
+            popupVideo.play();
+
+            // Listen for when scheduled video ends
+            popupVideo.onended = function() {
+                closeScheduledVideo(schedule);
+            };
+        }
+
+        // Close scheduled video
+        function closeScheduledVideo(schedule = null) {
+            popupOverlay.classList.remove('active');
+            popupVideo.pause();
+            popupVideo.src = '';
+
+            if (schedule) {
+                schedule.active = false;
+                renderSchedules();
+            } else {
+                schedules.forEach(s => s.active = false);
+                renderSchedules();
+            }
+
+            // Resume playlist
+            if (isPlaylistRunning && playlistFiles.length > 0) {
+                // Restore the video source and position
+                const media = playlistFiles[pausedState.playlistIndex];
+                if (media && mainVideo.src !== media.url) {
+                    mainVideo.src = media.url;
+                }
+                
+                mainVideo.currentTime = pausedState.currentTime;
+                
+                // Update now playing display
+                document.getElementById('nowPlayingContainer').style.display = 'block';
+                document.getElementById('nowPlayingTitle').textContent = media.name;
+                
+                if (!pausedState.wasPaused) {
+                    mainVideo.play();
+                }
+                
+                // Re-attach the playlist continuation handler
+                mainVideo.onended = function() {
+                    if (isPlaylistRunning) {
+                        playMediaFromPlaylist(currentPlaylistIndex + 1);
+                    }
+                };
+            }
+
+            popupVideo.onended = null;
+        }
+
+        // Check schedules every second
+        setInterval(checkSchedules, 1000);
+
+        // Initial render
+        renderSchedules();
+        renderPlaylistFiles();
+        renderScheduleFiles();
+    </script>
+</body>
+</html>
